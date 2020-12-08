@@ -1,9 +1,12 @@
 # this program is written to work with the OSPREY-200 PCI composite capture card, but it should work for anything using the BTTV kernel module 
 # as long as you change the --device="" tag in the arecord command. Do "arecord -L" and choose the one you think is right, but test it first pls
-import os
+# if you're on windows i feel bad for you son
+import subprocess
 import time
 import tkinter as tk
 import datetime
+import threading
+from playsound import playsound
 ## MAIN
 # ask user for the movie's name
 # ask user how long movie is
@@ -13,12 +16,14 @@ import datetime
 # SLEEP FOR TWO SECONDS
 class VHSGui:
     root = tk.Tk()
-    time_original = 0
-    time_seconds = 4376
+    time_seconds = 0
     time_remaining = tk.StringVar(value='0:00:00')
     butt_recordStatus = tk.StringVar(value="Push me to start...")
     time_HHMMSS = '0:00:00'
     recording = False
+    audio_thread = None
+    video_thread = None
+    start_time = None
     def __init__(self):
         self.root.geometry("640x480")
         self.root.title=("Cassie's VHS Ripper")
@@ -26,28 +31,56 @@ class VHSGui:
         self.root.timeEntry = tk.Entry(self.root, width=8).pack()
         self.root.startRecordButt = tk.Button(textvariable=self.butt_recordStatus, command=self.start_recording).pack()
         self.root.after(1000, self.updateTime)
-        
 
     def start_recording(self):
         if self.recording == False:
-            self.recording = True
             self.countdown()
             self.updateTime()
 
-    def countdown(self, count=4):
-        if not self.recording:
-            if count == 4:
-                self.butt_recordStatus.set("Get ready!")
-                self.root.after(1000, self.countdown, count-1)
-            if count == 0:
-                self.butt_recordStatus.set("RECORDING")
-                self.recording == True
-            else:
-                self.butt_recordStatus.set(count)
-                self.root.after(1000, self.countdown, count-1)
+    def countdown(self, count=3):
+        tempChildren = self.root.winfo_children()
+        if count == 3:
+            # playsound("assets/321.mp3", block=False)
+            self.recording == True
+            self.butt_recordStatus.set("Get ready!")
+            for i in range(len(tempChildren)):
+                if str(type(tempChildren[i])) == '<class \'tkinter.Entry\'>': # there has to be a better way
+                    print(tempChildren[i].get())
+                    break
+            self.start_threads()
+            self.root.after(1000, self.countdown, count-1)
+        if count == 0:
+            self.butt_recordStatus.set("RECORDING")
+        else:
+            self.butt_recordStatus.set(count)
+            self.root.after(1000, self.countdown, count-1)
+
+    def seconds_to_HHMMSS():
+        pass
+
+    def HHMMSS_to_seconds():
+        pass
+
+    def start_threads(self):
+        self.start_time = time.ctime()
+        print(self.start_time)
+        self.audio_thread = threading.Thread(target=self.record_audio)
+        self.video_thread = threading.Thread(target=self.record_video)
+        self.audio_thread.start()
+        self.video_thread.start()
 
     def HHMMSS_update(self):
         self.time_HHMMSS = datetime.timedelta(0,self.time_seconds)
+
+    def record_audio(self):
+        self.audio_thread = subprocess.Popen(["ping", "1.1", "-t", ">", "NUL"], shell=True)
+        time.sleep(3)
+        print("aud", self.audio_thread.pid)
+
+    def record_video(self):
+        self.video_thread = subprocess.Popen(["ping", "8.8.8.8", "-t", ">", "NUL"], shell=True)
+        time.sleep(2)
+        print("vid", self.video_thread.pid)
 
     def updateTime(self):
         if self.recording == True:
@@ -55,20 +88,27 @@ class VHSGui:
             self.HHMMSS_update()
             self.time_remaining.set(self.time_HHMMSS)
             if self.time_seconds >= 0: # recording is offset by one by start_recording(), so ofsetting by one is needed
-                
                 self.root.after(1000, self.updateTime)
             else:
                 print("recording finished")
                 self.recording = False
 
-
     def test(self):
         print(self.time_remaining-1)
-    
-    
 
 test = VHSGui()
-test.root.mainloop()
+while True:
+    test.root.update()
+    if (test.recording and test.time_seconds > 0):
+        print("YE DONE")
+        test.audio_thread.send_signal(15)
+        test.video_thread.send_signal(15)
+        time.sleep(2)
+        print("aud", test.audio_thread.returncode)
+        print("vid", test.video_thread.returncode)
+
+    
+#test.root.mainloop()
 
 
 
