@@ -1,44 +1,39 @@
-#!/usr/bin/python
-
+# we testin multiplication / division speeds
 import threading
+import random
 import time
 
-class myThread (threading.Thread):
-   def __init__(self, threadID, name, counter):
-      threading.Thread.__init__(self)
-      self.threadID = threadID
-      self.name = name
-      self.counter = counter
-   def run(self):
-      print "Starting " + self.name
-      # Get lock to synchronize threads
-      threadLock.acquire()
-      print_time(self.name, self.counter, 3)
-      # Free lock to release next thread
-      threadLock.release()
+def multiply(ints):
+   print("mul     started")
+   start = time.time()
+   procNums = []
+   for i in range (len(ints)): 
+      procNums.append(ints[i] * 2)
+   print("mul     ", time.time() - start)
+   
+   
 
-def print_time(threadName, delay, counter):
-   while counter:
-      time.sleep(delay)
-      print "%s: %s" % (threadName, time.ctime(time.time()))
-      counter -= 1
+def divide(ints):
+   print("div     started")
+   start = time.time()
+   procNums = []
+   for i in range (len(ints)):
+      procNums.append(ints[i] / 2)
+   print("div     ", time.time() - start)
 
-threadLock = threading.Lock()
-threads = []
+random.seed("we rippin VHSes")
+nums = []
+print("main    generating")
+start = time.time()
+for i in range(100000000):
+   nums.append(random.randint(10, 100))
+   if i % 10000000 == 0:
+      print(i/1000000, "% done")
+print("100.0 % done")
+print("main    ", time.time() - start)
 
-# Create new threads
-thread1 = myThread(1, "Thread-1", 1)
-thread2 = myThread(2, "Thread-2", 2)
-
-# Start new Threads
-thread1.start()
-thread2.start()
-
-# Add threads to thread list
-threads.append(thread1)
-threads.append(thread2)
-
-# Wait for all threads to complete
-for t in threads:
-    t.join()
-print "Exiting Main Thread"
+multiply(nums)
+divide(nums)
+#threading.Thread(target=multiply, args=(nums,)).start()
+#threading.Thread(target=divide, args=(nums,)).start()
+#time.sleep(100)

@@ -1,23 +1,10 @@
- def seconds_to_HHMMSS(self): # lots of division so dont use this too much
-        hrs = mins = 0
-        seconds = 3666 # set total seconds
-        if seconds > 60:
-            try:
-                hrs = seconds // 3600 # get number of hours in that amount of seconds
-                seconds = seconds - (hrs * 3600) # subtract that many seconds in hours from seconds
-                mins = seconds // 60 # get number of minutes in remaining number of seconds
-                seconds = seconds - (mins * 60) # subtract that many seconds in minutes from seconds
-            except ZeroDivisionError:
-                if hrs == 0: # if its less than an hour
-                    mins = seconds / (seconds % 60) # get number of minutes in remaining number of seconds
-                elif not mins == 0: # this is a catchall, but one that ignores hour boundries (which an else statement wouldn't've)
-                    print("oopsie we made a fucky wucky")
-        hrs = str(hrs)
-        mins = str(mins)
-        seconds = str(seconds)
-        # todo: convert single digits to double digits
-        return str(hrs) + ":" + str(mins) + ":" + str(seconds) 
-
     def HHMMSS_to_string(self):
         print(str(self.time_HHMMSS[0]) + ':' + str(self.time_HHMMSS[1]) + ':' + str(self.time_HHMMSS[2]))
         return str(self.time_HHMMSS[0]) + ':' + str(self.time_HHMMSS[1]) + ':' + str(self.time_HHMMSS[2])
+
+
+    def HHMMSS_update(self):
+        self.time_HHMMSS = datetime.timedelta(0,self.time_seconds)
+        
+    def test(self):
+        print(self.label_HHMMSS-1)

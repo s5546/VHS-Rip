@@ -17,49 +17,94 @@ from playsound import playsound
 class VHSGui:
     root = tk.Tk()
     time_seconds = 0
-    time_remaining = tk.StringVar(value='0:00:00')
-    butt_recordStatus = tk.StringVar(value="Push me to start...")
     time_HHMMSS = '0:00:00'
     recording = False
     audio_thread = None
     video_thread = None
+    ffmpeg_thread = None
     start_time = None
+    file_name = ""
+    label_HHMMSS = tk.StringVar(value=time_HHMMSS)
+    butt_recordStatus = tk.StringVar(value="Push me to start...")
+    len_entry_id = None
+    name_entry_id = None
+
     def __init__(self):
         self.root.geometry("640x480")
         self.root.title=("Cassie's VHS Ripper")
-        self.root.timeLabel = tk.Label(textvariable=self.time_remaining).pack() # its HERE make this an actual StringVar
+        self.root.remainingLabel = tk.Label(textvariable=self.label_HHMMSS).pack() # its HERE make this an actual StringVar
+        self.root.entryLabel = tk.Label(text="Please type the name of the file you want to save to.").pack()
+        self.root.timeEntry = tk.Entry(self.root, width=80).pack()
+        self.root.timeEntryLabel = tk.Label(text="Please type the duration of your VHS Tape, in HH:MM:SS format or in seconds").pack()
         self.root.timeEntry = tk.Entry(self.root, width=8).pack()
+        self.len_entry_id = id(self.root.getvar())
         self.root.startRecordButt = tk.Button(textvariable=self.butt_recordStatus, command=self.start_recording).pack()
-        self.root.after(1000, self.updateTime)
-
+        self.root.endRecordButt = tk.Button(text="Click me to end recording early", command=self.early_end_recording).pack()
+        self.root.timeWarningLabel = tk.Label(text="WARNING: The runtime reported on most VHS tapes is of the movie ONLY!\n" +
+            "If any previews are present on the tape, its recommended you add ~10% to the expected time.\n" +
+            "Unfortunately, there is no easy fix for this: you must record extra, then manually trim it.").pack()
     def start_recording(self):
         if self.recording == False:
             self.countdown()
-            self.updateTime()
 
-    def countdown(self, count=3):
-        tempChildren = self.root.winfo_children()
-        if count == 3:
-            # playsound("assets/321.mp3", block=False)
-            self.recording == True
-            self.butt_recordStatus.set("Get ready!")
+    def countdown(self, count=4):
+        if count == 4:
+            tempChildren = self.root.winfo_children()
             for i in range(len(tempChildren)):
                 if str(type(tempChildren[i])) == '<class \'tkinter.Entry\'>': # there has to be a better way
-                    print(tempChildren[i].get())
+                    temp_entry_value = tempChildren[i].get()
+                    if (":" in temp_entry_value):
+                        self.time_seconds = self.HHMMSS_to_seconds(temp_entry_value)
+                        self.time_HHMMSS = temp_entry_value
+                    else:
+                        self.time_seconds = int(temp_entry_value)
+                        self.time_HHMMSS = self.seconds_to_HHMMSS(int(temp_entry_value))
                     break
+            self.recording = True
+            self.butt_recordStatus.set("Get ready!")
             self.start_threads()
             self.root.after(1000, self.countdown, count-1)
-        if count == 0:
+        elif count == 0:
+            self.updateTime()
             self.butt_recordStatus.set("RECORDING")
         else:
             self.butt_recordStatus.set(count)
             self.root.after(1000, self.countdown, count-1)
 
-    def seconds_to_HHMMSS():
-        pass
+    def seconds_to_HHMMSS(self, seconds): # lots of division, be careful
+        hrs = mins = 0
+        if seconds > 60:
+            try:
+                hrs = seconds // 3600 # get number of hours in that amount of seconds
+                seconds = seconds - (hrs * 3600) # subtract that many seconds in hours from seconds
+                mins = seconds // 60 # get number of minutes in remaining number of seconds
+                seconds = seconds - (mins * 60) # subtract that many seconds in minutes from seconds
+            except ZeroDivisionError:
+                if hrs == 0: # if its less than an hour
+                    mins = seconds / (seconds % 60) # get number of minutes in remaining number of seconds
+                elif not mins == 0: # this is a catchall, but one that ignores hour boundries (which an else statement wouldn't've)
+                    print("oopsie we made a fucky wucky")
+        hrs = str(hrs)
+        if len(hrs) == 1:
+            hrs = "0" + hrs
+        mins = str(mins)
+        if len(mins) == 1:
+            mins = "0" + mins
+        seconds = str(seconds)
+        # todo: convert single digits to double digits
+        return str(hrs) + ":" + str(mins) + ":" + str(seconds) 
 
-    def HHMMSS_to_seconds():
-        pass
+    def HHMMSS_to_seconds(self, HHMMSS): # lots of division, be careful
+        hms_array = HHMMSS.split(":")
+        # todo: see if this section breaks if hours > 24
+        temp = int(hms_array[0]) * 3600 + \
+                int(hms_array[1]) * 60 + \
+                    int(hms_array[2])
+        print(type(temp))
+        return temp
+
+    def early_end_recording(self):
+        self.time_seconds = 1
 
     def start_threads(self):
         self.start_time = time.ctime()
@@ -69,46 +114,44 @@ class VHSGui:
         self.audio_thread.start()
         self.video_thread.start()
 
-    def HHMMSS_update(self):
-        self.time_HHMMSS = datetime.timedelta(0,self.time_seconds)
 
     def record_audio(self):
-        self.audio_thread = subprocess.Popen(["ping", "1.1", "-t", ">", "NUL"], shell=True)
-        time.sleep(3)
+        self.audio_thread = subprocess.Popen(["sudo arecord --device=\"hw:CARD=Bt878,DEV=0\" tempaudio.wav -f cd -N -d " + str(self.time_seconds)], shell=True)
         print("aud", self.audio_thread.pid)
+        self.audio_thread.wait()
 
-    def record_video(self):
-        self.video_thread = subprocess.Popen(["ping", "8.8.8.8", "-t", ">", "NUL"], shell=True)
-        time.sleep(2)
+    def record_video(self): 
+        self.video_thread = subprocess.Popen(["sudo streamer -p 4 -r 24 -q -o tempvideo.avi -j 90 -f mjpeg -n ntsc -t " + str(self.time_HHMMSS)], shell=True)
         print("vid", self.video_thread.pid)
+        self.video_thread.wait()
 
     def updateTime(self):
         if self.recording == True:
-            self.time_seconds = self.time_seconds - 1
-            self.HHMMSS_update()
-            self.time_remaining.set(self.time_HHMMSS)
-            if self.time_seconds >= 0: # recording is offset by one by start_recording(), so ofsetting by one is needed
+            if self.time_seconds > 0:
+                self.time_seconds = self.time_seconds - 1
+                self.time_HHMMSS = self.seconds_to_HHMMSS(self.time_seconds)
+                self.label_HHMMSS.set(self.time_HHMMSS)
                 self.root.after(1000, self.updateTime)
             else:
                 print("recording finished")
                 self.recording = False
+                self.butt_recordStatus.set("Push me to start...")
+                self.audio_thread.send_signal(15)
+                self.video_thread.send_signal(15)
+                print("aud", self.audio_thread.returncode)
+                print("vid", self.video_thread.returncode)
+                self.audio_thread
+                self.ffmpeg_thread = subprocess.Popen(["sudo ffmpeg -i tempvideo.avi -i tempaudio.wav -c copy -movflags use_metadata_tags -map 0:v -map 1:a test.mkv"], shell=True)
 
-    def test(self):
-        print(self.time_remaining-1)
 
 test = VHSGui()
-while True:
-    test.root.update()
-    if (test.recording and test.time_seconds > 0):
-        print("YE DONE")
-        test.audio_thread.send_signal(15)
-        test.video_thread.send_signal(15)
-        time.sleep(2)
-        print("aud", test.audio_thread.returncode)
-        print("vid", test.video_thread.returncode)
+#while True:
+#    test.root.update()
+#    time.sleep(1)
+        
 
     
-#test.root.mainloop()
+test.root.mainloop()
 
 
 
