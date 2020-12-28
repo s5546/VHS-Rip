@@ -21,6 +21,27 @@ def divide(ints):
       procNums.append(ints[i] / 2)
    print("div     ", time.time() - start)
 
+
+floatie = 0.12345678901234567890
+print(str(floatie))
+print(abs(5-10))
+
+
+'''
+HHMMSS = "99:20:15"
+hms_array = HHMMSS.split(":")
+if (len(hms_array) == 2): # if its MM:SS
+    hms_array.insert(0, "00")
+# todo: see if this section breaks if hours > 24
+temp_range = len(hms_array)
+temp_seconds = 0
+for i in range(temp_range):
+   temp_seconds = temp_seconds + (int(hms_array[i]) * (60 ** (temp_range - 1 - i)))
+   print(temp_seconds)
+
+
+
+
 random.seed("we rippin VHSes")
 nums = []
 print("main    generating")
@@ -37,3 +58,4 @@ divide(nums)
 #threading.Thread(target=multiply, args=(nums,)).start()
 #threading.Thread(target=divide, args=(nums,)).start()
 #time.sleep(100)
+'''

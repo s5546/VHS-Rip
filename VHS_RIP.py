@@ -32,7 +32,7 @@ class VHSGui:
         self.root.startRecordButt = tk.Button(textvariable=self.butt_recordStatus, command=self.start_recording).pack()
         self.root.endRecordButt = tk.Button(text="Click me to end recording early", command=self.early_end_recording).pack()
         self.root.timeWarningLabel = tk.Label(text="WARNING: The runtime reported on most VHS tapes is of the movie ONLY!\n" +
-            "If any previews are present on the tape, its recommended you add ~10% to the expected time.\n" +
+            "If any previews are present on the tape, I recommended you add ~10% to the expected time.\n" +
             "Unfortunately, there is no easy fix for this: you must record extra, then manually trim it.").pack()
     def start_recording(self):
         if self.recording == False:
@@ -151,12 +151,12 @@ class VHSGui:
                 diff = self.endtime_video_thread - self.endtime_audio_thread
                 if diff > 0: # if the audio started later than the video
                  self.ffmpeg_thread = subprocess.Popen(["sudo ffmpeg -hwaccel cuda -i tempaudio.wav -itsoffset " + str(diff) \
-                       + " -i tempvideo.avi -c:v libx265 -c copy -movflags use_metadata_tags -map 1:v -map 0:a " + \
-                           self.file_name + ".mkv"], shell=True) # technically, the float -> str casting makes us lose precision, but only by hundredthousandths of a second
+                         + " -i tempvideo.avi -c:v libx265 -c copy -movflags use_metadata_tags -map 1:v -map 0:a \"" + \
+                           self.file_name + ".mkv\""], shell=True) # technically, the float -> str casting makes us lose precision, but only by hundredthousandths of a second
                 elif diff < 0: # if the video started later than the audio
-                 self.ffmpeg_thread = subprocess.Popen(["sudo ffmpeg -hwaccel cuda -i tempvideo.avi -itsoffset " + str(diff) \
-                     + " -i tempaudio.wav -c:v libx265 -c copy -movflags use_metadata_tags -map 0:v -map 1:a " + \
-                          self.file_name + ".mkv"], shell=True)
+                 self.ffmpeg_thread = subprocess.Popen(["sudo ffmpeg -hwaccel cuda -i tempvideo.avi -itsoffset " + str(abs(diff)) \
+                         + " -i tempaudio.wav -c:v libx265 -c copy -movflags use_metadata_tags -map 0:v -map 1:a \"" + \
+                          self.file_name + ".mkv\""], shell=True)
                 else: # seems unlikely but ill go with it
                     self.ffmpeg_thread = subprocess.Popen(["sudo ffmpeg -i tempvideo.avi -i tempaudio.wav -c copy -movflags use_metadata_tags -map 0:v -map 1:a " + self.file_name + ".mkv"], shell=True)
 
