@@ -11,7 +11,8 @@ Requires:
     * Support for other encodings will be added later
 * FFMPEG
     * (currently) Must be compiled with x265 support
-* (currently) A CUDA capable GPU
+* (linux) The programs "arecord" and "streamer", for getting audio and video respectively
+* (currently) An OpenCL capable GPU
     * Support for other HW accel options will be added later (alongside CPU encoding)
 * (currently) Some form of linux, tested on Ubuntu 20.04
     * Support for Windows coming later
