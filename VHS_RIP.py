@@ -42,7 +42,7 @@ class VHSGui:
         if count == 4:
             tempChildren = self.root.winfo_children()
             for i in range(len(tempChildren)):
-                # im so sorry
+                # im so sorry # todo: supposedly i can use instanceof() or whatever the python equivalent is to fix this
                 if str(type(tempChildren[i])) == '<class \'tkinter.Entry\'>': # there has to be a better way
                     if tempChildren[i].winfo_width() > 400: # totally breaks if window gets scaled
                         self.file_name = tempChildren[i].get()
